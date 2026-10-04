@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Receptkalkylatorn – GoCakes</title>
+<style>
+:root{--bg:#FBF7F3;--card:#FFFFFF;--ink:#3B2F2A;--mute:#6E655E;--acc:#A56B5E;--accsoft:#F4E9E3;--line:#E4D6CD;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1F1917;--card:#2A2220;--ink:#F1E8E2;--mute:#B5A79E;--acc:#D49A8C;--accsoft:#3A2D29;--line:#4A3C37}}
+:root[data-theme="dark"]{--bg:#1F1917;--card:#2A2220;--ink:#F1E8E2;--mute:#B5A79E;--acc:#D49A8C;--accsoft:#3A2D29;--line:#4A3C37}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Calibri,"Segoe UI",system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:28px 18px 48px}
+h1{font:400 clamp(30px,8vw,40px)/1.1 Georgia,"Times New Roman",serif;margin:0 0 6px}
+.sub{color:var(--mute);margin:0 0 24px;font-family:Georgia,serif;font-style:italic}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:18px}
+.row{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+label{display:block;font-size:14px;color:var(--mute);margin-bottom:4px}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.big{font:400 28px Georgia,serif;color:var(--acc);padding-bottom:6px}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:14px;width:max-content;max-width:100%}
+.seg button{border:0;background:var(--bg);color:var(--mute);font:inherit;padding:8px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--acc);color:#fff}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.chips button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:7px 14px;font:inherit;cursor:pointer}.chips button[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
+.hint{font-size:14px;color:var(--mute);margin:10px 0 0}
+table{width:100%;border-collapse:collapse}
+th{font-weight:400;font-size:14px;color:var(--mute);text-align:left;padding:0 6px 6px 0}
+th.r{text-align:right}
+td{padding:5px 6px 5px 0;border-top:1px solid var(--line);vertical-align:middle}
+td input,td select{width:100%}
+td.out{text-align:right;font-weight:700;color:var(--acc);white-space:nowrap;padding-left:8px;min-width:92px}
+.x{border:0;background:none;color:var(--mute);font-size:20px;cursor:pointer;padding:4px 8px}
+.acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:6px;padding:9px 14px;font:inherit;cursor:pointer}
+.btn:hover{background:var(--accsoft)}
+@media (max-width:560px){
+table,tbody{display:block}thead{display:none}
+tbody tr{display:grid;grid-template-columns:84px 92px 1fr 36px;gap:6px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+td{border:0;padding:0}td.n{grid-column:1/-1}td.out{min-width:0}}
+#tabs{width:100%;margin-bottom:18px}#tabs button{flex:1;padding:13px 8px;font-size:17px}
+.sum{background:var(--accsoft);border-radius:8px;padding:10px 12px;margin:0 0 12px;font-weight:700;color:var(--acc)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Receptkalkylatorn</h1>
+  <p class="sub">Välj botten, kräm eller fyllning och räkna om till din form.</p>
+  <div class="seg" id="tabs" role="group" aria-label="Välj recept"></div>
+
+  <section class="panel" aria-labelledby="how">
+    <div class="seg" role="group" aria-label="Räkna om efter">
+      <button type="button" id="mForm" aria-pressed="true">Efter formens storlek</button>
+      <button type="button" id="mFac" aria-pressed="false">Efter faktor</button>
+    </div>
+    <div class="row" id="formRow">
+      <div><label for="d0">Receptets form, Ø cm</label><input id="d0" type="text" inputmode="decimal" onfocus="this.select()" value="16" style="width:110px"></div>
+      <div><label for="d1">Din form, Ø cm</label><input id="d1" type="text" inputmode="decimal" onfocus="this.select()" value="20" style="width:110px"></div>
+      <div class="big" id="fOut" aria-live="polite"></div>
+    </div>
+    <div id="facRow" hidden><div class="row">
+      <div><label for="fac">Gånger receptet</label><input id="fac" type="text" inputmode="decimal" onfocus="this.select()" value="2" style="width:110px"></div>
+      <div class="big" id="fOut2" aria-live="polite"></div>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Vanliga faktorer"></div></div>
+    <p class="hint" id="hint">Samma höjd på bottnen. Måttet räknas på ytan: (din form ÷ receptets form)².</p>
+  </section>
+
+  <section class="panel" aria-labelledby="rec">
+    <label for="title" id="rec">Recept</label>
+    <input id="title" value="Vaniljbotten" style="width:100%;margin-bottom:12px;font-family:Georgia,serif;font-size:20px">
+    <p class="sum" id="sum" aria-live="polite"></p>
+    <table>
+      <thead><tr><th>Ingrediens</th><th>Original</th><th>Enhet</th><th class="r">Du behöver</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="acts">
+      <button class="btn" type="button" id="add">Lägg till rad</button>
+      <button class="btn" type="button" id="clear">Nytt recept (tom lista)</button>
+      <button class="btn" type="button" id="reset">Återställ originalet</button>
+    </div>
+    <p class="hint" id="note"></p>
+    <p class="hint">Alla recept räknas om med samma faktor. Du kan ändra mängder, byta enhet och lägga till egna rader.</p>
+  </section>
+</main>
+<script>
+const UNITS=["g","ml","dl","st","msk","tsk","nypa"];
+const REC={
+ botten:{n:"Botten",t:"Vaniljbotten",note:"Receptet är för en rund form, Ø 16 cm. Ägg: väg upp de uppvispade äggen och använd vikten som mått när du får halva ägg.",r:[["Ägg",4,"st"],["Salt",1,"nypa"],["Strösocker",155,"g"],["Vetemjöl",155,"g"],["Vaniljpasta",5,"g"],["Majsstärkelse",25,"g"],["Bakpulver",7,"g"],["Kokande vatten",50,"ml"],["Doftfri solrosolja",40,"ml"]]},
+ kram:{n:"Kräm",t:"Cream cheese-kräm",note:"Originalet ger cirka 512 g kräm: ungefär 170 g till vart och ett av tre fyllningslager.",r:[["Philadelphia Original, kall",350,"g"],["Vispgrädde, minst 33 %, kall",78,"g"],["Florsocker",78,"g"],["Vaniljpasta",6.5,"g"]]},
+ konfi:{n:"Fyllning",t:"Jordgubbskonfi",note:"Färska eller frysta jordgubbar fungerar. Väg dem utan blast.",r:[["Jordgubbar",250,"g"],["Strösocker",55,"g"],["Majsstärkelse",10,"g"]]}
+};
+const clone=k=>REC[k].r.map(r=>r.slice());
+const state={};let cur="botten";
+Object.keys(REC).forEach(k=>state[k]={t:REC[k].t,r:clone(k)});
+let rows=state.botten.r,mode="form";
+const $=id=>document.getElementById(id);
+const num=v=>{const n=parseFloat(String(v).replace(",","."));return isFinite(n)?n:0};
+function factor(){
+  if(mode==="form"){const a=num($("d0").value),b=num($("d1").value);return a>0&&b>0?(b/a)**2:0}
+  return num($("fac").value);
+}
+function fmt(x,u){
+  if(!isFinite(x)||x<=0)return "–";
+  let v;
+  if(u==="st"||u==="nypa"||u==="msk"||u==="tsk"||u==="dl")v=Math.round(x*10)/10;
+  else v=x>=10?Math.round(x):Math.round(x*10)/10;
+  return String(v).replace(".",",")+" "+u;
+}
+function render(){
+  const f=factor();
+  const t=f>0?"× "+(Math.round(f*100)/100).toString().replace(".",","):"";
+  $("fOut").textContent=t;$("fOut2").textContent=t;sum();
+  $("rows").innerHTML=rows.map((r,i)=>`<tr>
+    <td class="n"><input aria-label="Ingrediens" data-i="${i}" data-k="0" value="${String(r[0]).replace(/"/g,"&quot;")}"></td>
+    <td class="a"><input aria-label="Mängd" inputmode="decimal" data-i="${i}" data-k="1" value="${String(r[1]).replace(".",",")}"></td>
+    <td class="u"><select aria-label="Enhet" data-i="${i}" data-k="2">${UNITS.map(u=>`<option${u===r[2]?" selected":""}>${u}</option>`).join("")}</select></td>
+    <td class="out" id="o${i}">${fmt(num(r[1])*f,r[2])}</td>
+    <td><button class="x" type="button" data-del="${i}" aria-label="Ta bort rad">×</button></td></tr>`).join("");
+}
+function sum(){const f=factor(),k=(Math.round(f*100)/100).toString().replace(".",",");
+  $("sum").textContent=f<=0?"Fyll i måtten ovan.":(mode==="form"?"Från Ø "+$("d0").value+" cm till Ø "+$("d1").value+" cm: alla mängder × "+k:"Alla mängder × "+k)+". Kolumnen Du behöver visar resultatet."}
+function outs(){sum();const f=factor();rows.forEach((r,i)=>{const c=$("o"+i);if(c)c.textContent=fmt(num(r[1])*f,r[2])});
+  const t=f>0?"× "+(Math.round(f*100)/100).toString().replace(".",","):"";$("fOut").textContent=t;$("fOut2").textContent=t}
+$("rows").addEventListener("input",e=>{const i=e.target.dataset.i,k=e.target.dataset.k;if(i==null)return;rows[i][k]=e.target.value;outs()});
+$("rows").addEventListener("change",e=>{const i=e.target.dataset.i,k=e.target.dataset.k;if(i==null)return;rows[i][k]=e.target.value;outs()});
+$("rows").addEventListener("click",e=>{const d=e.target.dataset.del;if(d==null)return;rows.splice(+d,1);render()});
+["d0","d1","fac"].forEach(id=>$(id).addEventListener("input",outs));
+const CH=[["½",0.5],["1",1],["1,5",1.5],["2",2],["3",3],["4",4]];
+function chips(){const f=num($("fac").value);$("chips").innerHTML=CH.map(c=>`<button type="button" data-f="${c[1]}" aria-pressed="${Math.abs(c[1]-f)<1e-9}">× ${c[0]}</button>`).join("")}
+$("chips").addEventListener("click",e=>{const v=e.target.dataset.f;if(v==null)return;$("fac").value=String(v).replace(".",",");outs();chips()});
+$("fac").addEventListener("input",chips);chips();
+$("add").onclick=()=>{rows.push(["",0,"g"]);render();const l=$("rows").querySelectorAll("tr");l[l.length-1].querySelector("input").focus()};
+$("clear").onclick=()=>{rows=[["",0,"g"]];state[cur]={t:"",r:rows};$("title").value="";render()};
+$("reset").onclick=()=>{rows=clone(cur);state[cur]={t:REC[cur].t,r:rows};$("title").value=REC[cur].t;render()};
+function tabs(){$("tabs").innerHTML=Object.keys(REC).map(k=>`<button type="button" data-k="${k}" aria-pressed="${k===cur}">${REC[k].n}</button>`).join("");$("note").textContent=REC[cur].note}
+$("tabs").addEventListener("click",e=>{const k=e.target.dataset.k;if(!k||k===cur)return;cur=k;rows=state[k].r;$("title").value=state[k].t;tabs();render()});
+$("title").addEventListener("input",()=>{state[cur].t=$("title").value});
+function setMode(m){mode=m;$("mForm").setAttribute("aria-pressed",m==="form");$("mFac").setAttribute("aria-pressed",m==="fac");
+  $("formRow").hidden=m!=="form";$("facRow").hidden=m!=="fac";
+  $("hint").textContent=m==="form"?"Samma höjd på bottnen. Måttet räknas på ytan: (din form ÷ receptets form)².":"Dubbel sats = 2, halv sats = 0,5.";render()}
+$("mForm").onclick=()=>setMode("form");$("mFac").onclick=()=>setMode("fac");
+tabs();render();
+</script>
+</body>
+</html>
