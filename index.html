@@ -42,6 +42,7 @@ table,tbody{display:block}thead{display:none}
 tbody tr{display:grid;grid-template-columns:84px 92px 1fr 36px;gap:6px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
 td{border:0;padding:0}td.n{grid-column:1/-1}td.out{min-width:0}}
 #tabs{width:100%;margin-bottom:18px}#tabs button{flex:1;padding:13px 8px;font-size:17px}
+.fg{margin-bottom:12px}.line{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.x1{color:var(--mute);font-size:15px}
 .sum{background:var(--accsoft);border-radius:8px;padding:10px 12px;margin:0 0 12px;font-weight:700;color:var(--acc)}
 </style>
 </head>
@@ -56,9 +57,15 @@ td{border:0;padding:0}td.n{grid-column:1/-1}td.out{min-width:0}}
       <button type="button" id="mForm" aria-pressed="true">Efter formens storlek</button>
       <button type="button" id="mFac" aria-pressed="false">Efter faktor</button>
     </div>
-    <div class="row" id="formRow">
-      <div><label for="d0">Receptets form, Ø cm</label><input id="d0" type="text" inputmode="decimal" onfocus="this.select()" value="16" style="width:110px"></div>
-      <div><label for="d1">Din form, Ø cm</label><input id="d1" type="text" inputmode="decimal" onfocus="this.select()" value="20" style="width:110px"></div>
+    <div id="formRow">
+      <div class="fg"><label for="s0">Receptets form</label><div class="line">
+        <select id="s0" aria-label="Receptets form, form"><option value="round">Rund</option><option value="square">Fyrkantig</option><option value="rect">Rektangulär</option></select>
+        <input id="a0" aria-label="Receptets form, mått" type="text" inputmode="decimal" onfocus="this.select()" value="16" style="width:84px"><span class="x1" id="u0">Ø cm</span>
+        <input id="b0" aria-label="Receptets form, bredd" type="text" inputmode="decimal" onfocus="this.select()" value="20" style="width:84px" hidden><span class="x1" id="v0" hidden>bredd cm</span></div></div>
+      <div class="fg"><label for="s1">Din form</label><div class="line">
+        <select id="s1" aria-label="Din form, form"><option value="round">Rund</option><option value="square">Fyrkantig</option><option value="rect">Rektangulär</option></select>
+        <input id="a1" aria-label="Din form, mått" type="text" inputmode="decimal" onfocus="this.select()" value="20" style="width:84px"><span class="x1" id="u1">Ø cm</span>
+        <input id="b1" aria-label="Din form, bredd" type="text" inputmode="decimal" onfocus="this.select()" value="20" style="width:84px" hidden><span class="x1" id="v1" hidden>bredd cm</span></div></div>
       <div class="big" id="fOut" aria-live="polite"></div>
     </div>
     <div id="facRow" hidden><div class="row">
@@ -66,7 +73,7 @@ td{border:0;padding:0}td.n{grid-column:1/-1}td.out{min-width:0}}
       <div class="big" id="fOut2" aria-live="polite"></div>
     </div>
     <div class="chips" id="chips" role="group" aria-label="Vanliga faktorer"></div></div>
-    <p class="hint" id="hint">Samma höjd på bottnen. Måttet räknas på ytan: (din form ÷ receptets form)².</p>
+    <p class="hint" id="hint">Samma höjd på bottnen. Mängderna räknas efter formens yta: rund, fyrkantig eller rektangulär.</p>
   </section>
 
   <section class="panel" aria-labelledby="rec">
@@ -99,8 +106,15 @@ Object.keys(REC).forEach(k=>state[k]={t:REC[k].t,r:clone(k)});
 let rows=state.botten.r,mode="form";
 const $=id=>document.getElementById(id);
 const num=v=>{const n=parseFloat(String(v).replace(",","."));return isFinite(n)?n:0};
+function area(g){const t=$("s"+g).value,a=num($("a"+g).value),b=num($("b"+g).value);
+  return t==="round"?Math.PI*(a/2)**2:t==="square"?a*a:a*b}
+function desc(g){const t=$("s"+g).value,a=$("a"+g).value,b=$("b"+g).value;
+  return t==="round"?"Ø "+a+" cm":t==="square"?"fyrkantig "+a+" × "+a+" cm":"rektangulär "+a+" × "+b+" cm"}
+function shape(g){const t=$("s"+g).value;
+  $("u"+g).textContent=t==="round"?"Ø cm":t==="square"?"sida cm":"längd cm";
+  $("b"+g).hidden=$("v"+g).hidden=t!=="rect"}
 function factor(){
-  if(mode==="form"){const a=num($("d0").value),b=num($("d1").value);return a>0&&b>0?(b/a)**2:0}
+  if(mode==="form"){const a=area(0),b=area(1);return a>0&&b>0?b/a:0}
   return num($("fac").value);
 }
 function fmt(x,u){
@@ -122,13 +136,14 @@ function render(){
     <td><button class="x" type="button" data-del="${i}" aria-label="Ta bort rad">×</button></td></tr>`).join("");
 }
 function sum(){const f=factor(),k=(Math.round(f*100)/100).toString().replace(".",",");
-  $("sum").textContent=f<=0?"Fyll i måtten ovan.":(mode==="form"?"Från Ø "+$("d0").value+" cm till Ø "+$("d1").value+" cm: alla mängder × "+k:"Alla mängder × "+k)+". Kolumnen Du behöver visar resultatet."}
+  $("sum").textContent=f<=0?"Fyll i måtten ovan.":(mode==="form"?"Från "+desc(0)+" till "+desc(1)+": alla mängder × "+k:"Alla mängder × "+k)+". Kolumnen Du behöver visar resultatet."}
 function outs(){sum();const f=factor();rows.forEach((r,i)=>{const c=$("o"+i);if(c)c.textContent=fmt(num(r[1])*f,r[2])});
   const t=f>0?"× "+(Math.round(f*100)/100).toString().replace(".",","):"";$("fOut").textContent=t;$("fOut2").textContent=t}
 $("rows").addEventListener("input",e=>{const i=e.target.dataset.i,k=e.target.dataset.k;if(i==null)return;rows[i][k]=e.target.value;outs()});
 $("rows").addEventListener("change",e=>{const i=e.target.dataset.i,k=e.target.dataset.k;if(i==null)return;rows[i][k]=e.target.value;outs()});
 $("rows").addEventListener("click",e=>{const d=e.target.dataset.del;if(d==null)return;rows.splice(+d,1);render()});
-["d0","d1","fac"].forEach(id=>$(id).addEventListener("input",outs));
+["a0","b0","a1","b1","fac"].forEach(id=>$(id).addEventListener("input",outs));
+["s0","s1"].forEach((id,g)=>$(id).addEventListener("change",()=>{shape(g);outs()}));shape(0);shape(1);
 const CH=[["½",0.5],["1",1],["1,5",1.5],["2",2],["3",3],["4",4]];
 function chips(){const f=num($("fac").value);$("chips").innerHTML=CH.map(c=>`<button type="button" data-f="${c[1]}" aria-pressed="${Math.abs(c[1]-f)<1e-9}">× ${c[0]}</button>`).join("")}
 $("chips").addEventListener("click",e=>{const v=e.target.dataset.f;if(v==null)return;$("fac").value=String(v).replace(".",",");outs();chips()});
@@ -141,7 +156,7 @@ $("tabs").addEventListener("click",e=>{const k=e.target.dataset.k;if(!k||k===cur
 $("title").addEventListener("input",()=>{state[cur].t=$("title").value});
 function setMode(m){mode=m;$("mForm").setAttribute("aria-pressed",m==="form");$("mFac").setAttribute("aria-pressed",m==="fac");
   $("formRow").hidden=m!=="form";$("facRow").hidden=m!=="fac";
-  $("hint").textContent=m==="form"?"Samma höjd på bottnen. Måttet räknas på ytan: (din form ÷ receptets form)².":"Dubbel sats = 2, halv sats = 0,5.";render()}
+  $("hint").textContent=m==="form"?"Samma höjd på bottnen. Mängderna räknas efter formens yta: rund, fyrkantig eller rektangulär.":"Dubbel sats = 2, halv sats = 0,5.";render()}
 $("mForm").onclick=()=>setMode("form");$("mFac").onclick=()=>setMode("fac");
 tabs();render();
 </script>
